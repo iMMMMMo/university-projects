@@ -1,0 +1,93 @@
+﻿@using SportsClothes.UI.WEBAPP.Models.Dto
+@using SportsClothes.INTERFACES
+@using SportsClothes.CORE
+@inject NavigationManager Navigation
+@inject HttpClient HttpClient
+@inject IJSRuntime JsRuntime
+
+@page "/producers/{Id:int}"
+
+<PageTitle>Edit</PageTitle>
+<h3>Edit producer</h3>
+
+<form @onsubmit="UpdateProducer">
+    <div class="row mb-3">
+        <div class="col-xs-12 col-md-3">
+            <div class="form-group">
+                <label for="name">*Name:</label>
+                <input id="name" class="form-control" @bind="_updatedProducer.Name" required minlength="3" maxlength="25" />
+            </div>
+        </div>
+
+        <div class="col-xs-12 col-md-3">
+            <div class="form-group">
+                <label for="countryOfOrigin">*Country of origin:</label>
+                <input id="countryOfOrigin" class="form-control" @bind="_updatedProducer.CountryOfOrigin" required minlength="2" maxlength="25" />
+            </div>
+        </div>
+  
+    </div>
+
+    <div class="row mb-3">
+        <div class="form-group">
+            <label for="description">*Description:</label>
+            <textarea id="description" class="form-control" @bind="_updatedProducer.Description" maxlength="300" required>
+        </textarea>
+        </div>
+    </div>
+
+    <div>
+        <button type="submit" class="btn btn-primary mb-3">Save Changes</button>
+        <button class="btn btn-danger mb-3" @onclick="Cancel" @onclick:preventDefault>Cancel</button>
+    </div>
+
+</form>
+
+@code {
+    [Parameter]
+    public int Id { get; set; }
+
+    private IProducerDto _updatedProducer = new ProducerDto();
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadProducer();
+    }
+
+    private async Task LoadProducer()
+    {
+        try
+        {
+            var response = await HttpClient.GetFromJsonAsync<ProducerDto>($"api/producers/{Id}");
+
+            if (response != null)
+            {
+                _updatedProducer = response;
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine(ex.Message);
+        }
+    }
+
+    private async Task UpdateProducer()
+    {
+        var response = await HttpClient.PutAsJsonAsync($"api/producers/update/{Id}", _updatedProducer);
+
+        if (response.IsSuccessStatusCode)
+        {
+            Navigation.NavigateTo("/producers");
+            return;
+        }
+
+        await JsRuntime.InvokeVoidAsync("alert", "Could not update producer. Please try again later.");
+
+    }
+
+    private void Cancel()
+    {
+        Navigation.NavigateTo("/producers");
+    }
+
+}
